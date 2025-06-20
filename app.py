@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(page_title="AI QA検索チャット", layout="centered")
-st.title("AI QAレコメンド・チャット（日本語強化版）")
+st.title("白井先生QA レコメンドチャット")
 
 QA_FILE = "QA_索引付きQA集.xlsx"
 @st.cache_data
