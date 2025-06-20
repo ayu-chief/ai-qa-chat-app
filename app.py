@@ -1,11 +1,11 @@
-
 import streamlit as st
 import pandas as pd
+from janome.tokenizer import Tokenizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(page_title="AI QA検索チャット", layout="centered")
-st.title("AI QAレコメンド・チャット")
+st.title("AI QAレコメンド・チャット（日本語強化版）")
 
 QA_FILE = "QA_索引付きQA集.xlsx"
 @st.cache_data
@@ -15,14 +15,20 @@ def load_qa():
 df = load_qa()
 corpus = (df["質問"].fillna("") + " " + df["回答"].fillna("")).tolist()
 
+# 日本語の分かち書き
+tokenizer = Tokenizer(wakati=True)
+def tokenize(text):
+    return list(tokenizer.tokenize(str(text)))
+
 if "history" not in st.session_state:
     st.session_state.history = []
 
 user_input = st.text_input("知りたいこと・悩みを入力してください", key="user_input")
 
 if user_input:
-    tfidf = TfidfVectorizer().fit_transform(corpus + [user_input])
-    sims = cosine_similarity(tfidf[-1], tfidf[:-1]).flatten()
+    tfidf = TfidfVectorizer(tokenizer=tokenize)
+    tfidf_matrix = tfidf.fit_transform(corpus + [user_input])
+    sims = cosine_similarity(tfidf_matrix[-1], tfidf_matrix[:-1]).flatten()
     top_idx = sims.argsort()[-5:][::-1]
     best_idx = top_idx[0]
     best_Q = df.iloc[best_idx]["質問"]
@@ -45,4 +51,4 @@ else:
         else:
             st.markdown(f"🤖 **AI:** {msg}")
 
-st.markdown("---\n\n*このアプリはQAエクセルから自動検索・推薦しています*")
+st.markdown("---\n\n*このアプリはQAエクセルから日本語形態素解析を使って検索・推薦しています*")
