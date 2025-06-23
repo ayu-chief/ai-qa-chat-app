@@ -24,6 +24,12 @@ if "history" not in st.session_state:
     st.session_state.history = []
 
 user_input = st.text_input("知りたいこと・悩みを入力してください", key="user_input")
+# 入力例を表示
+st.markdown("""
+##### 入力例
+- 例1：「不登校」
+- 例2：「友人とのトラブルがあったときの対応は？」
+""")
 
 if user_input:
     tfidf = TfidfVectorizer(tokenizer=tokenize)
