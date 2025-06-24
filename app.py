@@ -4,10 +4,12 @@ from janome.tokenizer import Tokenizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-st.set_page_config(page_title="AI QA検索チャット", layout="centered")
-st.title("白井先生QA レコメンドチャット")
+# タブ名・アプリタイトルを好きなものに変更可能
+st.set_page_config(page_title="教育QAチャット", layout="centered")
+st.title("学校Q&A自動検索チャット")
 
 QA_FILE = "QA_索引付きQA集.xlsx"
+
 @st.cache_data
 def load_qa():
     return pd.read_excel(QA_FILE, sheet_name="全件データ").dropna(subset=["質問", "回答"])
@@ -23,7 +25,9 @@ def tokenize(text):
 if "history" not in st.session_state:
     st.session_state.history = []
 
+# チャット入力欄
 user_input = st.text_input("知りたいこと・悩みを入力してください", key="user_input")
+
 # 入力例を表示
 st.markdown("""
 ##### 入力例
@@ -32,15 +36,17 @@ st.markdown("""
 """)
 
 if user_input:
-    tfidf = TfidfVectorizer(tokenizer=tokenize)
-    tfidf_matrix = tfidf.fit_transform(corpus + [user_input])
-    sims = cosine_similarity(tfidf_matrix[-1], tfidf_matrix[:-1]).flatten()
-    top_idx = sims.argsort()[-5:][::-1]
-    best_idx = top_idx[0]
-    best_Q = df.iloc[best_idx]["質問"]
-    best_A = df.iloc[best_idx]["回答"]
-    st.session_state.history.append(("ユーザー", user_input))
-    st.session_state.history.append(("AI", f"おすすめQ&A：\n\n**Q:** {best_Q}\n\n**A:** {best_A}"))
+    with st.spinner("検索中..."):
+        tfidf = TfidfVectorizer(tokenizer=tokenize)
+        tfidf_matrix = tfidf.fit_transform(corpus + [user_input])
+        sims = cosine_similarity(tfidf_matrix[-1], tfidf_matrix[:-1]).flatten()
+        top_idx = sims.argsort()[-5:][::-1]
+        best_idx = top_idx[0]
+        best_Q = df.iloc[best_idx]["質問"]
+        best_A = df.iloc[best_idx]["回答"]
+        st.session_state.history.append(("ユーザー", user_input))
+        st.session_state.history.append(("AI", f"おすすめQ&A：\n\n**Q:** {best_Q}\n\n**A:** {best_A}"))
+    # チャット履歴表示
     for role, msg in st.session_state.history:
         if role == "ユーザー":
             st.markdown(f"🧑‍💻 **あなた:** {msg}")
